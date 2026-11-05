@@ -22,7 +22,7 @@ a{color:var(--blue)}
 .bar .now{font:400 .95rem 'Special Elite','Courier New',monospace;color:var(--red);min-width:8.5rem}
 button,select,input{font:inherit;font-size:.85rem;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:.3rem .55rem}
 button{cursor:pointer}button:hover{border-color:var(--blue)}
-button[aria-pressed="true"]{background:var(--blue);color:var(--paper);border-color:var(--blue)}
+button[aria-pressed="true"]{border-color:var(--blue)}
 :focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 #q{width:11rem}
 .prog{height:3px;background:var(--rule);margin-top:.4rem}.prog i{display:block;height:100%;width:0;background:var(--red)}
@@ -68,6 +68,17 @@ h4{font:400 1.15rem 'Special Elite','Courier New',monospace;margin:1.4rem 0 .4re
 #lb .box{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;padding:.8rem;box-sizing:border-box}
 #lb img{max-width:100%;max-height:calc(100vh - 4.5rem);object-fit:contain;background:#fff}#lb figcaption{color:#fff;font:.9rem 'Special Elite','Courier New',monospace}
 #lb .x{position:absolute;top:.6rem;right:.8rem}
+
+.gap{border:1px dashed var(--rule);border-radius:8px;padding:.5rem 1.2rem;margin:0 0 1rem;color:var(--mute);font:400 .9rem 'Special Elite','Courier New',monospace}
+.dp{display:none;margin:0}.dp img{width:100%;height:auto;display:block;border:1px solid var(--rule);border-radius:6px;background:#fff;cursor:zoom-in}
+body.dayview .menu{display:none}
+body.dayview aside{display:none}body.dayview .wrap{display:block;max-width:1180px}
+body.dayview main>*:not(.entry.on){display:none}
+body.dayview .entry.on{display:block}
+body.dayview:not(.nophoto) .entry.on .dp{display:block;margin:.4rem 0 .8rem}
+@media (min-width:901px){body.dayview:not(.nophoto) .entry.on.hasph{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:1.6rem;align-items:start}
+body.dayview:not(.nophoto) .entry.on.hasph>*{grid-column:1}body.dayview:not(.nophoto) .entry.on.hasph>header{grid-column:1/-1}
+body.dayview:not(.nophoto) .entry.on.hasph>.dp{grid-column:2;grid-row:2/span 200;position:sticky;top:calc(env(safe-area-inset-top,0px) + 7.5rem);margin:0}}
 </style>
 </head>
 <body>
@@ -77,7 +88,7 @@ h4{font:400 1.15rem 'Special Elite','Courier New',monospace;margin:1.4rem 0 .4re
  <button id="prev" title="Previous day (←)">◀</button><button id="next" title="Next day (→)">▶</button>
  <select id="mo" aria-label="Month"></select><select id="dy" aria-label="Day"></select>
  <input id="q" type="search" placeholder="Search diary…" aria-label="Search diary"><button id="qn" title="Next match">↓</button><span id="qc" style="font-size:.8rem;color:var(--mute)"></span>
- <button id="hl" aria-pressed="true" title="Highlight edited words">Edits</button><button id="sr" aria-pressed="true" title="Source image labels">Sources</button>
+ <button id="hl" aria-pressed="true" title="Highlight edited words">Edits</button><button id="sr" aria-pressed="true" title="Source image labels">Sources</button><button id="dv" aria-pressed="false" title="Show one day at a time (D)">Day</button>
  <button id="fm" title="Smaller text">A−</button><button id="fp" title="Larger text">A+</button><button id="th" title="Toggle light/dark">◐</button>
 </div><div class="prog"><i id="pbar"></i></div></div>
 <div class="wrap">
@@ -883,7 +894,8 @@ I have not added any diary content that isn&#x27;t on the page. If the entry abo
 <dialog id="lb" aria-label="Source image"><div class="box"><button type="button" class="x" aria-label="Close">Close ✕</button><figure style="margin:0;display:contents"><img alt=""><figcaption></figcaption></figure></div></dialog>
 <script>
 (function(){var lb=document.getElementById('lb'),im=lb.querySelector('img'),cp=lb.querySelector('figcaption'),from=null;
-document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button.src');if(!b)return;from=b;var t=b.closest('.entry').querySelector('h3').textContent;im.src=b.dataset.src;im.alt='Source image of the diary page for '+t;cp.textContent=b.textContent+' - '+t+(b.classList.contains('inh')?' (continued from previous page)':'');lb.showModal()});
+function openLb(b){from=b;var t=b.closest('.entry').querySelector('h3').textContent;im.src=b.dataset.src;im.alt='Source image of the diary page for '+t;cp.textContent=b.textContent+' - '+t+(b.classList.contains('inh')?' (continued from previous page)':'');lb.showModal()}window.openLb=openLb;
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button.src');if(!b||document.body.classList.contains('dayview'))return;openLb(b)});
 lb.addEventListener('click',function(e){if(e.target===lb||e.target.classList.contains('box')||e.target.classList.contains('x'))lb.close()});
 lb.addEventListener('close',function(){im.removeAttribute('src');if(from)from.focus()})})();
 (function(){
@@ -904,7 +916,7 @@ function setCur(i){if(i===cur&&document.getElementById('now').dataset.s)return;c
  if(mo.value!=e.dataset.mo){mo.value=e.dataset.mo;fillDays(e.dataset.mo)}dy.value=i;
  [].forEach.call(document.querySelectorAll('.days a.cur'),function(a){a.classList.remove('cur')});var a=links[e.id];if(a){a.classList.add('cur');var s=document.getElementById('side');if(s.scrollHeight>s.clientHeight){var r=a.getBoundingClientRect(),sr=s.getBoundingClientRect();if(r.top<sr.top||r.bottom>sr.bottom)s.scrollTop+=r.top-sr.top-60}}
  document.getElementById('pbar').style.width=((i+1)/es.length*100)+'%'}
-var tick=false;function spy(){tick=false;if(lock)return;var y=window.innerHeight*.3,k=0,pad=parseFloat(getComputedStyle(root).scrollPaddingTop)||136;for(var i=0;i<es.length;i++){if(es[i].getBoundingClientRect().top<=pad+4)k=i;else break}
+var tick=false;function spy(){tick=false;if(lock||dayOn)return;var y=window.innerHeight*.3,k=0,pad=parseFloat(getComputedStyle(root).scrollPaddingTop)||136;for(var i=0;i<es.length;i++){if(es[i].getBoundingClientRect().top<=pad+4)k=i;else break}
  if(k<cur&&window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2&&es[cur].getBoundingClientRect().top<window.innerHeight)k=cur;
  var ap=document.getElementById('appendix').getBoundingClientRect().top;if(ap<y){document.getElementById('now').textContent='Appendix';return}setCur(k)}
 window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(spy)}},{passive:true});
@@ -920,11 +932,33 @@ try{var t=localStorage.getItem('th');if(t)root.dataset.theme=t}catch(e){}
 document.getElementById('menu').onclick=function(){var s=document.getElementById('side'),o=s.classList.toggle('open');this.setAttribute('aria-expanded',o)};
 document.getElementById('side').addEventListener('click',function(e){if(e.target.tagName=='A')this.classList.remove('open')});
 document.getElementById('top').onclick=function(){window.scrollTo(0,0)};
+
+// gap placeholders
+(function(){var main=document.querySelector('main'),prev=null,Y=1947;
+function dt(m,d){return Date.UTC(Y,m-1,d)/864e5}function mk(a,b){var f=function(n){var x=new Date(n*864e5);return MN[x.getUTCMonth()].slice(0,3)+' '+x.getUTCDate()};var g=document.createElement('div');g.className='gap';g.textContent=(a==b?f(a):f(a)+' – '+f(b))+': no entry';return g}
+var last=null;es.forEach(function(e){var m=+e.id.slice(1,3),d=+e.id.slice(3,5),n=dt(m,d);if(prev!=null&&n>prev+1)main.insertBefore(mk(prev+1,n-1),e);if(prev==null||n>prev)prev=n;last=e});
+if(prev!=null&&prev<dt(12,31)){var g=mk(prev+1,dt(12,31));last.parentNode.insertBefore(g,last.nextSibling)}})();
+// day view
+var dv=document.getElementById('dv'),dayOn=false;
+es.forEach(function(e){var b=e.querySelector('button.src');if(!b)return;var f=document.createElement('figure');f.className='dp';var i=document.createElement('img');i.alt='Source image of the diary page for '+e.querySelector('h3').textContent;i.dataset.src=b.dataset.src;i.title='Click to enlarge';f.appendChild(i);e.querySelector('header').after(f);e.classList.add('hasph');i.onclick=function(){openLb(b)}});
+function showCur(){es.forEach(function(e,i){e.classList.toggle('on',dayOn&&i===cur)});if(dayOn){var im=es[cur].querySelector('.dp img');if(im&&!im.src)im.src=im.dataset.src}}
+function urlSync(){try{var u=new URL(location.href);if(dayOn)u.searchParams.set('view','day');else u.searchParams.delete('view');u.hash=dayOn?'#'+es[cur].id:'';history.replaceState(null,'',u)}catch(e){}}
+var _sc=setCur;setCur=function(i){_sc(i);showCur();if(dayOn)urlSync()};
+function setDay(on){dayOn=on;dv.setAttribute('aria-pressed',on);document.body.classList.toggle('dayview',on);showCur();if(on){window.scrollTo(0,0)}else{root.style.scrollBehavior='auto';go(cur);root.style.scrollBehavior=''}urlSync()}
+dv.onclick=function(){setDay(!dayOn)};
+function setPh(on){document.body.classList.toggle('nophoto',!on);es.forEach(function(e){var b=e.querySelector('button.src');if(b)b.setAttribute('aria-pressed',on)});try{localStorage.setItem('ph',on?1:0)}catch(e){}}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button.src');if(!b||!dayOn)return;setPh(document.body.classList.contains('nophoto'));showCur()});
+try{if(localStorage.getItem('ph')==='0')setPh(false)}catch(e){}
+var _go=go;go=function(i){if(!dayOn)return _go(i);i=Math.max(0,Math.min(es.length-1,i));setCur(i);window.scrollTo(0,0);es[i].setAttribute('tabindex','-1');es[i].focus({preventScroll:true})};
+function fromHash(){var h=location.hash.slice(1);var k=es.findIndex(function(e){return e.id===h});if(dayOn){if(k>=0){setCur(k);window.scrollTo(0,0)}else if(h)setDay(false)}}
+window.addEventListener('hashchange',fromHash);
+document.addEventListener('keydown',function(ev){if(/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)||ev.ctrlKey||ev.metaKey||ev.altKey)return;if(ev.key=='d'||ev.key=='D'){setDay(!dayOn)}});
+(function(){var u=new URL(location.href),k=es.findIndex(function(e){return '#'+e.id===location.hash});if(k>=0)setCur(k);if(u.searchParams.get('view')==='day')setDay(true)})();
 // search
 var q=document.getElementById('q'),qc=document.getElementById('qc'),hits=[],hi=-1;
 function search(){hits.forEach(function(e){e.classList.remove('hit')});hits=[];hi=-1;var v=q.value.trim().toLowerCase();if(v.length<2){qc.textContent='';return}
  es.forEach(function(e){if(e.textContent.toLowerCase().indexOf(v)>-1){hits.push(e);e.classList.add('hit')}});qc.textContent=hits.length+' day'+(hits.length==1?'':'s')}
-q.oninput=search;function nx(){if(!hits.length)return;hi=(hi+1)%hits.length;hits[hi].scrollIntoView({block:'start'});qc.textContent=(hi+1)+'/'+hits.length}
+q.oninput=search;function nx(){if(!hits.length)return;hi=(hi+1)%hits.length;if(dayOn)go(es.indexOf(hits[hi]));else hits[hi].scrollIntoView({block:'start'});qc.textContent=(hi+1)+'/'+hits.length}
 document.getElementById('qn').onclick=nx;q.onkeydown=function(e){if(e.key=='Enter')nx()};
 })();
 </script>
